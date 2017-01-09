@@ -11,6 +11,7 @@
 import CoreBluetooth
 
 protocol BluetoothManagerDelegate {
+    func didDisconnect()
     func didUpdateRSSI(RSSI: Int)
 }
 
@@ -27,6 +28,7 @@ class BluetoothManager: NSObject {
     
     fileprivate var isPoweredOn = false
     fileprivate var scanTimer: Timer!
+    fileprivate var rssiTimer: Timer?
     fileprivate var isBusy = false
     
     var delegate: BluetoothManagerDelegate?
@@ -53,19 +55,17 @@ class BluetoothManager: NSObject {
     fileprivate func startScanForPeripheral(serviceUuid: CBUUID) {
         log("startScanForPeripheral")
         centralManager.stopScan()
-        scanTimer = Timer.scheduledTimer(timeInterval: timeoutInSecs, target: self, selector: #selector(timeout), userInfo: nil, repeats: false)
-        centralManager.scanForPeripherals(withServices: [serviceUuid], options: nil) // [CBCentralManagerScanOptionAllowDuplicatesKey : NSNumber(value: true)])     // nil)
-    }
-    
-    // can't be private because called by timer
-    func timeout() {
-        log("timed out")
-        centralManager.stopScan()
-        isBusy = false
+        scanTimer = Timer.scheduledTimer(withTimeInterval: timeoutInSecs, repeats: false) {
+            _ in
+            log("scan timed out")
+            self.centralManager.stopScan()
+            self.isBusy = false
+        }
+        centralManager.scanForPeripherals(withServices: [serviceUuid], options: nil)
     }
     
     fileprivate func startReadingRSSI() {
-        Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) {
+        rssiTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) {
             _ in
             self.peripheral.readRSSI()
         }
@@ -121,6 +121,8 @@ extension BluetoothManager: CBCentralManagerDelegate {
     func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
         let message = "centralManager didDisconnectPeripheral " + (error == nil ? "ok" :  ("error " + error!.localizedDescription))
         log(message)
+        rssiTimer?.invalidate()
+        rssiTimer = nil
     }
     
 }
@@ -134,6 +136,15 @@ extension BluetoothManager: CBPeripheralDelegate {
         for service in peripheral.services! {
             log("service \(service.uuid)")
             peripheral.discoverCharacteristics(nil, for: service)
+        }
+    }
+    
+    func peripheral(_ peripheral: CBPeripheral, didModifyServices invalidatedServices: [CBService]) {
+        log("peripheral didModifyServices")
+        if invalidatedServices.count > 0 {
+            rssiTimer?.invalidate()
+            rssiTimer = nil
+            delegate?.didDisconnect()
         }
     }
     

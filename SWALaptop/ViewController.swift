@@ -13,7 +13,6 @@ class ViewController: UIViewController {
     
     @IBOutlet weak var userSegmentedControl: UISegmentedControl!
     
-    
     @IBOutlet weak var minRSSILabel: UILabel!
     @IBOutlet weak var curRSSILabel: UILabel!
     @IBOutlet weak var maxRSSILabel: UILabel!
@@ -23,12 +22,13 @@ class ViewController: UIViewController {
     
     fileprivate let minRSSI = -80
     fileprivate let maxRSSI = -20
+    fileprivate let thresholdRSSI = -45
     
     fileprivate let lockedColor = UIColor.red
     fileprivate let unlockedColor = UIColor(red: 0.0, green: 0.5, blue: 0.0, alpha: 1.0)
     
+    private var isLoggedIn = false
     
-    fileprivate let thresholdRSSI = -45
     
     private var bluetoothManager: BluetoothManager!
     
@@ -63,6 +63,13 @@ class ViewController: UIViewController {
 }
 
 extension ViewController: BluetoothManagerDelegate {
+    
+    func didDisconnect() {
+        curRSSILabel.text = ""
+        rssiProgressView.setProgress(0.0, animated: true)
+        lockLabel.backgroundColor = lockedColor
+        lockLabel.text = "Locked"
+    }
     
     func didUpdateRSSI(RSSI: Int) {
         curRSSILabel.text = "\(RSSI)"
