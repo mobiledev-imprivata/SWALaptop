@@ -10,6 +10,10 @@
 
 import CoreBluetooth
 
+protocol BluetoothManagerDelegate {
+    func didUpdateRSSI(RSSI: Int)
+}
+
 class BluetoothManager: NSObject {
     
     fileprivate let serviceUUID        = CBUUID(string: "1FE5D02C-78AB-414D-AD97-1A4E5297227A")
@@ -24,6 +28,8 @@ class BluetoothManager: NSObject {
     fileprivate var isPoweredOn = false
     fileprivate var scanTimer: Timer!
     fileprivate var isBusy = false
+    
+    var delegate: BluetoothManagerDelegate?
     
     override init() {
         super.init()
@@ -169,6 +175,9 @@ extension BluetoothManager: CBPeripheralDelegate {
     func peripheral(_ peripheral: CBPeripheral, didReadRSSI RSSI: NSNumber, error: Error?) {
         let message = "peripheral didReadRSSI " + (error == nil ? "\(RSSI)" :  ("error " + error!.localizedDescription))
         log(message)
+        if error == nil {
+            delegate?.didUpdateRSSI(RSSI: Int(RSSI))
+        }
     }
     
 }
