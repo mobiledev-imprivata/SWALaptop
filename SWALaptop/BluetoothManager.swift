@@ -67,8 +67,6 @@ class BluetoothManager: NSObject {
     fileprivate func startReadingRSSI() {
         Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) {
             _ in
-            let state = self.centralManager.state
-            log("centralManager.state \(self.centralManagerStateToString(state: state))")
             self.peripheral.readRSSI()
         }
     }
@@ -79,25 +77,6 @@ class BluetoothManager: NSObject {
         peripheral = nil
         characteristic = nil
         isBusy = false
-    }
-    
-    fileprivate func centralManagerStateToString(state: CBManagerState) -> String {
-        var caseString: String!
-        switch state {
-        case .unknown:
-            caseString = "unknown"
-        case .resetting:
-            caseString = "resetting"
-        case .unsupported:
-            caseString = "unsupported"
-        case .unauthorized:
-            caseString = "unauthorized"
-        case .poweredOff:
-            caseString = "poweredOff"
-        case .poweredOn:
-            caseString = "poweredOn"
-        }
-        return caseString
     }
     
 }

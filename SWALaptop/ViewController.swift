@@ -49,12 +49,12 @@ class ViewController: UIViewController {
     private func configureRSSIProgressView() {
         minRSSILabel.text = "\(minRSSI)"
         maxRSSILabel.text = "\(maxRSSI)"
-
+        
         curRSSILabel.text = ""
         
         rssiProgressView.setProgress(0.0, animated: true)
     }
-
+    
     @IBAction func login(_ sender: Any) {
         let index = userSegmentedControl.selectedSegmentIndex
         log("index \(index)")
@@ -63,10 +63,8 @@ class ViewController: UIViewController {
 }
 
 extension ViewController: BluetoothManagerDelegate {
-
+    
     func didUpdateRSSI(RSSI: Int) {
-        log("didUpdateRSSI \(RSSI)")
-        
         curRSSILabel.text = "\(RSSI)"
         
         let isAboveThreshhold = RSSI > thresholdRSSI
