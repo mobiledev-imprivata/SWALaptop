@@ -12,6 +12,7 @@ class ViewController: UIViewController {
     
     
     @IBOutlet weak var userSegmentedControl: UISegmentedControl!
+    @IBOutlet weak var loginButton: UIButton!
     
     @IBOutlet weak var minRSSILabel: UILabel!
     @IBOutlet weak var curRSSILabel: UILabel!
@@ -20,16 +21,10 @@ class ViewController: UIViewController {
     @IBOutlet weak var rssiProgressView: UIProgressView!
     @IBOutlet weak var lockLabel: UILabel!
     
-    fileprivate let minRSSI = -80
-    fileprivate let maxRSSI = -20
-    fileprivate let thresholdRSSI = -45
-    
     fileprivate let lockedColor = UIColor.red
     fileprivate let unlockedColor = UIColor(red: 0.0, green: 0.5, blue: 0.0, alpha: 1.0)
     
-    private var isLoggedIn = false
-    
-    
+    fileprivate let user = User()
     private var bluetoothManager: BluetoothManager!
     
     override func viewDidLoad() {
@@ -37,6 +32,9 @@ class ViewController: UIViewController {
         // Do any additional setup after loading the view, typically from a nib.
         
         configureRSSIProgressView()
+        
+        user.delegate = self
+        
         bluetoothManager = BluetoothManager()
         bluetoothManager.delegate = self
     }
@@ -47,17 +45,20 @@ class ViewController: UIViewController {
     }
     
     private func configureRSSIProgressView() {
-        minRSSILabel.text = "\(minRSSI)"
-        maxRSSILabel.text = "\(maxRSSI)"
+        minRSSILabel.text = "\(user.minRSSI)"
+        maxRSSILabel.text = "\(user.maxRSSI)"
         
         curRSSILabel.text = ""
         
         rssiProgressView.setProgress(0.0, animated: true)
     }
     
-    @IBAction func login(_ sender: Any) {
+    @IBAction func loginButtonTapped(_ sender: Any) {
         let index = userSegmentedControl.selectedSegmentIndex
-        log("index \(index)")
+        let name = userSegmentedControl.titleForSegment(at: index)!
+        log("index \(index) \(name)")
+        user.login()
+        bluetoothManager.connect(index: index)
     }
     
 }
@@ -65,24 +66,45 @@ class ViewController: UIViewController {
 extension ViewController: BluetoothManagerDelegate {
     
     func didDisconnect() {
-        curRSSILabel.text = ""
-        rssiProgressView.setProgress(0.0, animated: true)
-        lockLabel.backgroundColor = lockedColor
-        lockLabel.text = "Locked"
+        user.logout()
     }
     
-    func didUpdateRSSI(RSSI: Int) {
-        curRSSILabel.text = "\(RSSI)"
+    func didUpdateRSSI(_ rssi: Int) {
+        curRSSILabel.text = "\(rssi)"
         
-        let isAboveThreshhold = RSSI > thresholdRSSI
-        let color = isAboveThreshhold ? unlockedColor : lockedColor
-        
-        let progress = Float(RSSI - minRSSI) / Float(maxRSSI - minRSSI)
+        let progress = Float(rssi - user.minRSSI) / Float(user.maxRSSI - user.minRSSI)
         rssiProgressView.setProgress(progress, animated: true)
-        rssiProgressView.progressTintColor = color
+        rssiProgressView.progressTintColor = user.isAboveThreshold(rssi: rssi) ? unlockedColor : lockedColor
         
-        lockLabel.backgroundColor = color
-        lockLabel.text = isAboveThreshhold ? "Unlocked" : "Locked"
+        user.updateRSSI(rssi)
+    }
+    
+}
+
+extension ViewController: UserStateDelegate {
+
+    func didUpdateLoginState(_ state: UserLoginState) {
+        log("user changed login state to \(state)")
+        switch state {
+        case .loggedOut:
+            loginButton.setTitle("Login", for: .normal)
+        case .searching:
+            loginButton.setTitle("Searching...", for: .normal)
+        case .loggedIn:
+            loginButton.setTitle("Logout", for: .normal)
+        }
+    }
+    
+    func didUpdateLockState(_ state: UserLockState) {
+        log("user changed lock state to \(state)")
+        switch state {
+        case .locked:
+            lockLabel.text = "Locked"
+            lockLabel.backgroundColor = lockedColor
+        case .unlocked:
+            lockLabel.text = "Unlocked"
+            lockLabel.backgroundColor = unlockedColor
+        }
     }
     
 }

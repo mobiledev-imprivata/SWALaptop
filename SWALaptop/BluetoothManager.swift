@@ -12,7 +12,7 @@ import CoreBluetooth
 
 protocol BluetoothManagerDelegate {
     func didDisconnect()
-    func didUpdateRSSI(RSSI: Int)
+    func didUpdateRSSI(_ rssi: Int)
 }
 
 class BluetoothManager: NSObject {
@@ -38,8 +38,8 @@ class BluetoothManager: NSObject {
         centralManager = CBCentralManager(delegate:self, queue:nil)
     }
     
-    func go() {
-        log("go")
+    func connect(index: Int) {
+        log("connect \(index)")
         guard isPoweredOn else {
             log("not powered on")
             return
@@ -52,6 +52,14 @@ class BluetoothManager: NSObject {
         startScanForPeripheral(serviceUuid: serviceUUID)
     }
     
+    func disconnect() {
+        log("disconnect")
+        centralManager.cancelPeripheralConnection(peripheral)
+        peripheral = nil
+        characteristic = nil
+        isBusy = false
+    }
+
     fileprivate func startScanForPeripheral(serviceUuid: CBUUID) {
         log("startScanForPeripheral")
         centralManager.stopScan()
@@ -69,14 +77,6 @@ class BluetoothManager: NSObject {
             _ in
             self.peripheral.readRSSI()
         }
-    }
-    
-    fileprivate func disconnect() {
-        log("disconnect")
-        centralManager.cancelPeripheralConnection(peripheral)
-        peripheral = nil
-        characteristic = nil
-        isBusy = false
     }
     
 }
@@ -101,7 +101,6 @@ extension BluetoothManager: CBCentralManagerDelegate {
         }
         log("centralManagerDidUpdateState \(caseString!)")
         isPoweredOn = centralManager.state == .poweredOn
-        go()
     }
     
     func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi RSSI: NSNumber) {
@@ -166,7 +165,7 @@ extension BluetoothManager: CBPeripheralDelegate {
         let message = "peripheral didReadRSSI " + (error == nil ? "\(RSSI)" :  ("error " + error!.localizedDescription))
         log(message)
         if error == nil {
-            delegate?.didUpdateRSSI(RSSI: Int(RSSI))
+            delegate?.didUpdateRSSI(Int(RSSI))
         }
     }
     
