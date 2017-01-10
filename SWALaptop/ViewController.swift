@@ -25,7 +25,7 @@ class ViewController: UIViewController {
     fileprivate let unlockedColor = UIColor(red: 0.0, green: 0.5, blue: 0.0, alpha: 1.0)
     
     fileprivate let user = User()
-    private var bluetoothManager: BluetoothManager!
+    fileprivate var bluetoothManager: BluetoothManager!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -44,7 +44,7 @@ class ViewController: UIViewController {
         // Dispose of any resources that can be recreated.
     }
     
-    private func configureRSSIProgressView() {
+    fileprivate func configureRSSIProgressView() {
         minRSSILabel.text = "\(user.minRSSI)"
         maxRSSILabel.text = "\(user.maxRSSI)"
         
@@ -57,8 +57,12 @@ class ViewController: UIViewController {
         let index = userSegmentedControl.selectedSegmentIndex
         let name = userSegmentedControl.titleForSegment(at: index)!
         log("index \(index) \(name)")
-        user.login()
-        bluetoothManager.connect(index: index)
+        if user.loginState == .loggedOut {
+            user.login()
+            bluetoothManager.connect(index: index)
+        } else if user.loginState == .loggedIn {
+            user.logout()
+        }
     }
     
 }
@@ -66,8 +70,11 @@ class ViewController: UIViewController {
 extension ViewController: BluetoothManagerDelegate {
     
     func didDisconnect() {
+        curRSSILabel.text = ""
+        rssiProgressView.setProgress(0.0, animated: true)
+
         user.logout()
-    }
+}
     
     func didUpdateRSSI(_ rssi: Int) {
         curRSSILabel.text = "\(rssi)"
@@ -84,10 +91,11 @@ extension ViewController: BluetoothManagerDelegate {
 extension ViewController: UserStateDelegate {
 
     func didUpdateLoginState(_ state: UserLoginState) {
-        log("user changed login state to \(state)")
+        log("user login state updated to \(state)")
         switch state {
         case .loggedOut:
             loginButton.setTitle("Login", for: .normal)
+            bluetoothManager.disconnect()
         case .searching:
             loginButton.setTitle("Searching...", for: .normal)
         case .loggedIn:
@@ -96,7 +104,7 @@ extension ViewController: UserStateDelegate {
     }
     
     func didUpdateLockState(_ state: UserLockState) {
-        log("user changed lock state to \(state)")
+        log("user lock state updated to \(state)")
         switch state {
         case .locked:
             lockLabel.text = "Locked"
