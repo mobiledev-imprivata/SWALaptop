@@ -70,9 +70,6 @@ class ViewController: UIViewController {
 extension ViewController: BluetoothManagerDelegate {
     
     func didDisconnect() {
-        curRSSILabel.text = ""
-        rssiProgressView.setProgress(0.0, animated: true)
-
         user.logout()
 }
     
@@ -95,6 +92,8 @@ extension ViewController: UserStateDelegate {
         switch state {
         case .loggedOut:
             loginButton.setTitle("Login", for: .normal)
+            curRSSILabel.text = ""
+            rssiProgressView.setProgress(0.0, animated: true)
             bluetoothManager.disconnect()
         case .searching:
             loginButton.setTitle("Searching...", for: .normal)
