@@ -12,28 +12,38 @@ class ViewController: UIViewController {
     
     
     @IBOutlet weak var userSegmentedControl: UISegmentedControl!
-    @IBOutlet weak var loginButton: UIButton!
+    @IBOutlet weak var userLabel: UILabel!
     
     @IBOutlet weak var minRSSILabel: UILabel!
     @IBOutlet weak var curRSSILabel: UILabel!
     @IBOutlet weak var maxRSSILabel: UILabel!
-    
     @IBOutlet weak var rssiProgressView: UIProgressView!
+
     @IBOutlet weak var lockLabel: UILabel!
+    @IBOutlet weak var terminalLabel: UILabel!
+    
+    fileprivate var blurView: UIVisualEffectView!
     
     fileprivate let lockedColor = UIColor.red
     fileprivate let unlockedColor = UIColor(red: 0.0, green: 0.5, blue: 0.0, alpha: 1.0)
+
+    fileprivate let liveTerminalColor =  UIColor.blue //  UIColor(red: 0.0, green: 0.5, blue: 0.5, alpha: 1.0)
     
-    fileprivate let user = User()
+    fileprivate let stateMachine = StateMachine()
     fileprivate var bluetoothManager: BluetoothManager!
+    
+    fileprivate var currentUser: Int?
+    
+    fileprivate var isBlurred = false
+    fileprivate var isBlacked = true
     
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
         
-        configureRSSIProgressView()
+        configureUI()
         
-        user.delegate = self
+        stateMachine.delegate = self
         
         bluetoothManager = BluetoothManager()
         bluetoothManager.delegate = self
@@ -44,24 +54,79 @@ class ViewController: UIViewController {
         // Dispose of any resources that can be recreated.
     }
     
-    fileprivate func configureRSSIProgressView() {
-        minRSSILabel.text = "\(user.minRSSI)"
-        maxRSSILabel.text = "\(user.maxRSSI)"
+    fileprivate func configureUI() {
+        userLabel.text = "Logged out"
+
+        minRSSILabel.text = "\(stateMachine.minRSSI)"
+        maxRSSILabel.text = "\(stateMachine.maxRSSI)"
         
         curRSSILabel.text = ""
         
         rssiProgressView.setProgress(0.0, animated: true)
+        
+        terminalLabel.textColor = .black
+        
+        blurView = UIVisualEffectView(effect: UIBlurEffect(style: .light))
+        blurView.frame = terminalLabel.bounds
+        blurView.alpha = 0.0
+        terminalLabel.addSubview(blurView)
     }
     
-    @IBAction func loginButtonTapped(_ sender: Any) {
+    @IBAction func tappedBadge(_ sender: Any) {
         let index = userSegmentedControl.selectedSegmentIndex
         let name = userSegmentedControl.titleForSegment(at: index)!
-        log("index \(index) \(name)")
-        if user.loginState == .loggedOut {
-            user.login()
+        log("tappedBadge \(index) \(name)")
+        if stateMachine.state == .idle {
+            stateMachine.startSearch()
             bluetoothManager.connect(index: index)
-        } else if user.loginState == .loggedIn {
-            user.logout()
+        }
+    }
+    
+    fileprivate func lock() {
+        UIView.animate(withDuration: 1.0) {
+            self.lockLabel.text = "Locked"
+            self.lockLabel.backgroundColor = self.lockedColor
+        }
+    }
+    
+    fileprivate func unlock() {
+        UIView.animate(withDuration: 1.0) {
+            self.lockLabel.text = "Unlocked"
+            self.lockLabel.backgroundColor = self.unlockedColor
+        }
+    }
+    
+    fileprivate func blur() {
+        log("blur")
+        UIView.animate(withDuration: 2.0) {
+            self.blurView.alpha = 1.0
+            self.isBlurred = true
+        }
+    }
+    
+    fileprivate func unblur() {
+        log("unblur")
+        UIView.animate(withDuration: 2.0) {
+            self.blurView.alpha = 0.0
+            self.isBlurred = false
+        }
+    }
+    
+    fileprivate func fadeIn() {
+        log("fadeIn")
+        UIView.animate(withDuration: 2.0) {
+            self.terminalLabel.textColor = .white
+            self.terminalLabel.backgroundColor = self.liveTerminalColor
+            self.isBlacked = false
+        }
+    }
+    
+    fileprivate func fadeOut() {
+        log("fadeOut")
+        UIView.animate(withDuration: 2.0) {
+            self.terminalLabel.textColor = .black
+            self.terminalLabel.backgroundColor = .black
+            self.isBlacked = true
         }
     }
     
@@ -70,47 +135,59 @@ class ViewController: UIViewController {
 extension ViewController: BluetoothManagerDelegate {
     
     func didDisconnect() {
-        user.logout()
+        stateMachine.idle()
 }
     
     func didUpdateRSSI(_ rssi: Int) {
         curRSSILabel.text = "\(rssi)"
         
-        let progress = Float(rssi - user.minRSSI) / Float(user.maxRSSI - user.minRSSI)
+        let progress = Float(rssi - stateMachine.minRSSI) / Float(stateMachine.maxRSSI - stateMachine.minRSSI)
         rssiProgressView.setProgress(progress, animated: true)
-        rssiProgressView.progressTintColor = user.isAboveThreshold(rssi: rssi) ? unlockedColor : lockedColor
+        rssiProgressView.progressTintColor = stateMachine.isAboveThreshold(rssi: rssi) ? unlockedColor : lockedColor
         
-        user.updateRSSI(rssi)
+        if stateMachine.state == .searching {
+            userLabel.text = "Come closer!"
+        }
+        
+        stateMachine.updateRSSI(rssi)
     }
     
 }
 
-extension ViewController: UserStateDelegate {
+extension ViewController: StateMachineDelegate {
 
-    func didUpdateLoginState(_ state: UserLoginState) {
-        log("user login state updated to \(state)")
+    func didUpdateState(_ state: State) {
+        log("state updated to \(state)")
         switch state {
-        case .loggedOut:
-            loginButton.setTitle("Login", for: .normal)
+        case .idle:
+            userLabel.text = "Logged out"
             curRSSILabel.text = ""
             rssiProgressView.setProgress(0.0, animated: true)
             bluetoothManager.disconnect()
+            if isBlurred {
+                unblur()
+            }
+            fadeOut()
+            lock()
         case .searching:
-            loginButton.setTitle("Searching...", for: .normal)
-        case .loggedIn:
-            loginButton.setTitle("Logout", for: .normal)
-        }
-    }
-    
-    func didUpdateLockState(_ state: UserLockState) {
-        log("user lock state updated to \(state)")
-        switch state {
-        case .locked:
-            lockLabel.text = "Locked"
-            lockLabel.backgroundColor = lockedColor
+            userLabel.text = "Searching..."
         case .unlocked:
-            lockLabel.text = "Unlocked"
-            lockLabel.backgroundColor = unlockedColor
+            let index = userSegmentedControl.selectedSegmentIndex
+            let name = userSegmentedControl.titleForSegment(at: index)!
+            userLabel.text = name
+
+            if isBlurred {
+                unblur()
+            } else if isBlacked {
+                fadeIn()
+            }
+            unlock()
+        case .lockedShort:
+            blur()
+            lock()
+        case .lockedLong:
+            unblur()
+            fadeOut()
         }
     }
     

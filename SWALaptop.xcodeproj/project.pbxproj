@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		D61F7D3C1E25347B00EBC26D /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = D61F7D3B1E25347B00EBC26D /* User.swift */; };
+		D61F7D3C1E25347B00EBC26D /* StateMachine.swift in Sources */ = {isa = PBXBuildFile; fileRef = D61F7D3B1E25347B00EBC26D /* StateMachine.swift */; };
 		D6B8B2C71E23E77C004A67F1 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6B8B2C61E23E77C004A67F1 /* AppDelegate.swift */; };
 		D6B8B2C91E23E77C004A67F1 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6B8B2C81E23E77C004A67F1 /* ViewController.swift */; };
 		D6B8B2CC1E23E77C004A67F1 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = D6B8B2CA1E23E77C004A67F1 /* Main.storyboard */; };
@@ -18,7 +18,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		D61F7D3B1E25347B00EBC26D /* User.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
+		D61F7D3B1E25347B00EBC26D /* StateMachine.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StateMachine.swift; sourceTree = "<group>"; };
 		D6B8B2C31E23E77C004A67F1 /* SWALaptop.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SWALaptop.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D6B8B2C61E23E77C004A67F1 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		D6B8B2C81E23E77C004A67F1 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -62,7 +62,7 @@
 			children = (
 				D6B93AB51E23EC2F002C71CF /* Logger.swift */,
 				D6B93ABB1E23EE54002C71CF /* BluetoothManager.swift */,
-				D61F7D3B1E25347B00EBC26D /* User.swift */,
+				D61F7D3B1E25347B00EBC26D /* StateMachine.swift */,
 				D6B8B2C61E23E77C004A67F1 /* AppDelegate.swift */,
 				D6B8B2C81E23E77C004A67F1 /* ViewController.swift */,
 				D6B8B2CA1E23E77C004A67F1 /* Main.storyboard */,
@@ -149,7 +149,7 @@
 				D6B8B2C91E23E77C004A67F1 /* ViewController.swift in Sources */,
 				D6B93AB61E23EC2F002C71CF /* Logger.swift in Sources */,
 				D6B93ABC1E23EE54002C71CF /* BluetoothManager.swift in Sources */,
-				D61F7D3C1E25347B00EBC26D /* User.swift in Sources */,
+				D61F7D3C1E25347B00EBC26D /* StateMachine.swift in Sources */,
 				D6B8B2C71E23E77C004A67F1 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

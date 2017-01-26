@@ -54,6 +54,7 @@ class BluetoothManager: NSObject {
     
     func disconnect() {
         log("disconnect")
+        guard peripheral != nil else { return }
         centralManager.cancelPeripheralConnection(peripheral)
         peripheral = nil
         characteristic = nil
@@ -73,7 +74,7 @@ class BluetoothManager: NSObject {
     }
     
     fileprivate func startReadingRSSI() {
-        rssiTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) {
+        rssiTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) {
             _ in
             self.peripheral.readRSSI()
         }
