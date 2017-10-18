@@ -47,6 +47,14 @@ class ViewController: UIViewController {
         
         bluetoothManager = BluetoothManager()
         bluetoothManager.delegate = self
+        
+        blurView = UIVisualEffectView(effect: UIBlurEffect(style: .light))
+        blurView.alpha = 0.0
+        terminalLabel.addSubview(blurView)
+    }
+
+    override func viewDidLayoutSubviews() {
+        blurView.frame = terminalLabel.bounds
     }
     
     override func didReceiveMemoryWarning() {
@@ -65,11 +73,6 @@ class ViewController: UIViewController {
         rssiProgressView.setProgress(0.0, animated: true)
         
         terminalLabel.textColor = .black
-        
-        blurView = UIVisualEffectView(effect: UIBlurEffect(style: .light))
-        blurView.frame = terminalLabel.bounds
-        blurView.alpha = 0.0
-        terminalLabel.addSubview(blurView)
     }
     
     @IBAction func tappedBadge(_ sender: Any) {
