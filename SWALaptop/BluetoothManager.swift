@@ -10,7 +10,7 @@
 
 import CoreBluetooth
 
-protocol BluetoothManagerDelegate {
+protocol BluetoothManagerDelegate: class {
     func didDisconnect()
     func didUpdateRSSI(_ rssi: Int)
 }
@@ -31,7 +31,7 @@ class BluetoothManager: NSObject {
     fileprivate var rssiTimer: Timer?
     fileprivate var isBusy = false
     
-    var delegate: BluetoothManagerDelegate?
+    weak var delegate: BluetoothManagerDelegate?
     
     override init() {
         super.init()
