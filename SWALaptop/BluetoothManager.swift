@@ -166,7 +166,7 @@ extension BluetoothManager: CBPeripheralDelegate {
         let message = "peripheral didReadRSSI " + (error == nil ? "\(RSSI)" :  ("error " + error!.localizedDescription))
         log(message)
         if error == nil {
-            delegate?.didUpdateRSSI(Int(RSSI))
+            delegate?.didUpdateRSSI(Int(truncating: RSSI))
         }
     }
     
